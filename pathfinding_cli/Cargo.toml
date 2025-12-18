@@ -1,0 +1,10 @@
+[package]
+name = "pathfinding_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+image = "0.25.9"
+anyhow = "1.0"
+image_pathfinding = { path = "../image_pathfinding" }

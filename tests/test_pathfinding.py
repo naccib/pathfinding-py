@@ -98,15 +98,15 @@ def test_find_route_temporal_astar():
     # Shape: (time, height, width)
     volume = np.ones((5, 10, 10), dtype=np.uint8) * 150
 
-    # Create a clear path that moves forward in time
-    # At each time step, move diagonally
+    # Create a clear path that moves forward in time, one step at a time
+    # Each step moves within reach=1, so the path is: (0,0,0) -> (1,1,1) -> (2,2,2) -> (3,3,3) -> (4,4,4)
     for t in range(5):
         x = min(t, 9)
         y = min(t, 9)
         volume[t, y, x] = 20
 
     start = (0, 0, 0)
-    end = (9, 9, 4)
+    end = (4, 4, 4)  # End is on the path and reachable with reach=1
 
     result = pathfinding_py.find_route_temporal(volume, "astar", start, end)
 
@@ -124,12 +124,15 @@ def test_find_route_temporal_dijkstra():
     # Create a simple 3D volume: 3 time frames, 5x5 spatial dimensions
     volume = np.ones((3, 5, 5), dtype=np.uint8) * 100
 
-    # Create a clear path
+    # Create a clear path that moves one step at a time (reachable with reach=1)
+    # Path: (0,0,0) -> (1,1,1) -> (2,2,2)
     for t in range(3):
-        volume[t, 0, t] = 30
+        x = min(t, 4)
+        y = min(t, 4)
+        volume[t, y, x] = 30
 
     start = (0, 0, 0)
-    end = (4, 4, 2)
+    end = (2, 2, 2)  # End is on the path and reachable with reach=1
 
     result = pathfinding_py.find_route_temporal(volume, "dijkstra", start, end)
 
@@ -167,12 +170,12 @@ def test_find_route_temporal_with_reach():
     """Test temporal routing with custom reach parameter."""
     volume = np.ones((3, 8, 8), dtype=np.uint8) * 120
 
-    # Create a path that requires reach > 1
+    # Create a path that requires reach > 1 and reaches the end
     for t in range(3):
         volume[t, t * 2, t * 2] = 25
 
     start = (0, 0, 0)
-    end = (6, 6, 2)
+    end = (4, 4, 2)  # End is on the path (t=2, x=4, y=4)
 
     # Test with reach=2
     result = pathfinding_py.find_route_temporal(volume, "dijkstra", start, end, reach=2)

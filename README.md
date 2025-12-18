@@ -98,6 +98,8 @@ volume = np.ones((10, 100, 100), dtype=np.uint8) * 100
 result = pathfinding_py.find_route_temporal(
     volume,
     algorithm="astar",
+    start=(0, 0, 0),  # Start position (x, y, t)
+    end=(99, 99, 9),  # End position (x, y, t)
     reach=2,  # Allow skipping up to 2 pixels in spatial dimensions
     axis=2    # Move forward along time axis (default)
 )
@@ -153,17 +155,17 @@ Find a path in a 2D heatmap.
 **Returns:**
 - `Optional[Tuple[List[Tuple[int, int]], int]]`: The path found and total cost, or `None` if no path was found
 
-### `find_route_temporal(array, algorithm, *, reach=None, axis=None, starts=None, ends=None)`
+### `find_route_temporal(array, algorithm, start, end, *, reach=None, axis=None)`
 
 Find a route through a temporal volume.
 
 **Parameters:**
 - `array`: 3D NumPy array with dtype `uint8` (shape: time, height, width)
 - `algorithm`: Algorithm to use: `"astar"` or `"dijkstra"`
+- `start`: Start position as `(x, y, t)` tuple
+- `end`: End position as `(x, y, t)` tuple
 - `reach` (optional): Number of elements that can be skipped along each non-axis dimension (default: 1)
 - `axis` (optional): The axis along which the path must always move forward (default: 2 for time)
-- `starts` (optional): Start positions as list of `(x, y, t)` tuples. If `None`, uses all positions at axis=0
-- `ends` (optional): End positions as list of `(x, y, t)` tuples. If `None`, uses all positions at axis=-1
 
 **Returns:**
 - `Optional[Tuple[List[Tuple[int, int, int]], int]]`: The route found and total cost, or `None` if no route was found
@@ -209,6 +211,8 @@ for t in range(5):
 result = pathfinding_py.find_route_temporal(
     volume,
     algorithm="astar",
+    start=(0, 0, 0),  # Start position (x, y, t)
+    end=(19, 19, 4),  # End position (x, y, t)
     reach=1,
     axis=2  # Time axis
 )

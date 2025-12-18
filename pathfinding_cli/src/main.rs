@@ -92,9 +92,11 @@ fn main() -> Result<()> {
         };
 
         let path = match cli.algo {
-            Algorithm::Dijkstra => Dijkstra2D {}.find_path_in_heatmap(&array, start_xy, end_xy),
-            Algorithm::Astar => AStar2D {}.find_path_in_heatmap(&array, start_xy, end_xy),
-            Algorithm::Fringe => Fringe2D {}.find_path_in_heatmap(&array, start_xy, end_xy),
+            Algorithm::Dijkstra => {
+                Dijkstra2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy)
+            }
+            Algorithm::Astar => AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy),
+            Algorithm::Fringe => Fringe2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy),
         };
 
         if let Some((points, cost)) = path {
@@ -161,14 +163,14 @@ fn main() -> Result<()> {
         // Dispatch algorithm using find_route_over_time
         let path = match cli.algo {
             Algorithm::Dijkstra => DijkstraTemporal {}.find_route_over_time(
-                &volume,
+                volume.view(),
                 Some(cli.reach),
                 Some(cli.axis),
                 starts,
                 ends,
             ),
             Algorithm::Astar => AStarTemporal {}.find_route_over_time(
-                &volume,
+                volume.view(),
                 Some(cli.reach),
                 Some(cli.axis),
                 starts,

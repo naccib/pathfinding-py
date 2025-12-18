@@ -1,4 +1,4 @@
-use numpy::ndarray::Array3;
+use numpy::ndarray::{Array3, ArrayView3};
 use pathfinding::prelude::{astar, dijkstra};
 
 /// A position in the temporal volume (x, y, t).
@@ -48,7 +48,7 @@ pub fn load_images_to_volume(paths: &[String]) -> Array3<u8> {
 /// Find neighbours with reach constraint: always move +1 along axis, can move within reach in other dimensions.
 /// For temporal routing: axis=2 (time) is default, reach limits movement in x and y dimensions.
 fn find_neighbours_with_reach(
-    volume: &Array3<u8>,
+    volume: ArrayView3<u8>,
     pos: Pos3D,
     axis: usize,
     reach: usize,
@@ -128,7 +128,11 @@ fn find_neighbours_with_reach(
 
 /// Generate all positions at a specific axis index.
 /// For temporal routing: if axis=2 and index=0, returns all (x, y, 0) positions.
-fn generate_positions_at_axis_index(volume: &Array3<u8>, axis: usize, index: usize) -> Vec<Pos3D> {
+fn generate_positions_at_axis_index(
+    volume: ArrayView3<u8>,
+    axis: usize,
+    index: usize,
+) -> Vec<Pos3D> {
     let (depth, height, width) = volume.dim();
     let mut positions = Vec::new();
 
@@ -170,7 +174,7 @@ fn generate_positions_at_axis_index(volume: &Array3<u8>, axis: usize, index: usi
 }
 
 /// Generate default start positions (all positions at axis=0) or end positions (all positions at axis=-1).
-fn generate_default_starts_ends(volume: &Array3<u8>, axis: usize, is_start: bool) -> Vec<Pos3D> {
+fn generate_default_starts_ends(volume: ArrayView3<u8>, axis: usize, is_start: bool) -> Vec<Pos3D> {
     let (depth, height, width) = volume.dim();
     let axis = if axis >= 3 { 2 } else { axis };
 
@@ -210,7 +214,7 @@ impl DijkstraTemporal {
     /// * `Option<(Vec<Pos3D>, u32)>` - The route found and the total cost, or None if no route was found
     pub fn find_route_over_time(
         &self,
-        volume: &Array3<u8>,
+        volume: ArrayView3<u8>,
         reach: Option<usize>,
         axis: Option<usize>,
         starts: Option<Vec<Pos3D>>,
@@ -307,7 +311,7 @@ impl AStarTemporal {
     /// * `Option<(Vec<Pos3D>, u32)>` - The route found and the total cost, or None if no route was found
     pub fn find_route_over_time(
         &self,
-        volume: &Array3<u8>,
+        volume: ArrayView3<u8>,
         reach: Option<usize>,
         axis: Option<usize>,
         starts: Option<Vec<Pos3D>>,

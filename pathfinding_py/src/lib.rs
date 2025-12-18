@@ -1,7 +1,6 @@
 use image_pathfinding::{
     AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, Fringe2D, ImagePathfinder2D,
 };
-use numpy::ndarray::{Array2, Array3};
 use numpy::{PyReadonlyArray2, PyReadonlyArray3};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -25,14 +24,14 @@ fn find_path_2d(
 ) -> PyResult<Option<(Vec<(u32, u32)>, u32)>> {
     // PyReadonlyArray2<u8> enforces 2D array with u8 dtype at the Python binding level.
     // This provides runtime validation from Python's perspective.
-    // Convert to Array2<u8>
-    let array_2d: Array2<u8> = array.as_array().to_owned();
+    // Use the array view directly to avoid copying
+    let array_2d = array.as_array();
 
     // Dispatch to appropriate algorithm
     let result = match algorithm.to_lowercase().as_str() {
-        "astar" => AStar2D {}.find_path_in_heatmap(&array_2d, start, end),
-        "dijkstra" => Dijkstra2D {}.find_path_in_heatmap(&array_2d, start, end),
-        "fringe" => Fringe2D {}.find_path_in_heatmap(&array_2d, start, end),
+        "astar" => AStar2D {}.find_path_in_heatmap(array_2d.view(), start, end),
+        "dijkstra" => Dijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end),
+        "fringe" => Fringe2D {}.find_path_in_heatmap(array_2d.view(), start, end),
         _ => {
             return Err(PyValueError::new_err(format!(
                 "Unknown algorithm: {}. Supported algorithms: astar, dijkstra, fringe",
@@ -49,33 +48,39 @@ fn find_path_2d(
 /// # Arguments
 /// * `array` - A 3D NumPy array with dtype uint8 (shape: time, height, width)
 /// * `algorithm` - Algorithm to use: "astar" or "dijkstra"
+/// * `start` - Start position as (x, y, t) tuple
+/// * `end` - End position as (x, y, t) tuple
 /// * `reach` - Optional: Number of elements that can be skipped along each non-axis dimension (default: 1)
 /// * `axis` - Optional: The axis along which the path must always move forward (default: 2 for time)
-/// * `starts` - Optional: Start positions as list of (x, y, t) tuples. If None, uses all positions at axis=0
-/// * `ends` - Optional: End positions as list of (x, y, t) tuples. If None, uses all positions at axis=-1
 ///
 /// # Returns
 /// * `Optional[Tuple[List[Tuple[int, int, int]], int]]` - The route found and total cost, or None if no route was found
 #[pyfunction]
-#[pyo3(signature = (array, algorithm, *, reach=None, axis=None, starts=None, ends=None))]
+#[pyo3(signature = (array, algorithm, start, end, *, reach=None, axis=None))]
 fn find_route_temporal(
     array: PyReadonlyArray3<u8>,
     algorithm: &str,
+    start: (u32, u32, u32),
+    end: (u32, u32, u32),
     reach: Option<usize>,
     axis: Option<usize>,
-    starts: Option<Vec<(u32, u32, u32)>>,
-    ends: Option<Vec<(u32, u32, u32)>>,
 ) -> PyResult<Option<(Vec<(u32, u32, u32)>, u32)>> {
     // PyReadonlyArray3<u8> enforces 3D array with u8 dtype at the Python binding level.
     // This provides runtime validation from Python's perspective.
-    // Convert to Array3<u8>
-    let array_3d: Array3<u8> = array.as_array().to_owned();
+    // Use the array view directly to avoid copying
+    let array_3d = array.as_array();
+
+    // Convert single points to vectors for the underlying function
+    let starts = Some(vec![start]);
+    let ends = Some(vec![end]);
 
     // Dispatch to appropriate algorithm
     let result = match algorithm.to_lowercase().as_str() {
-        "astar" => AStarTemporal {}.find_route_over_time(&array_3d, reach, axis, starts, ends),
+        "astar" => {
+            AStarTemporal {}.find_route_over_time(array_3d.view(), reach, axis, starts, ends)
+        }
         "dijkstra" => {
-            DijkstraTemporal {}.find_route_over_time(&array_3d, reach, axis, starts, ends)
+            DijkstraTemporal {}.find_route_over_time(array_3d.view(), reach, axis, starts, ends)
         }
         _ => {
             return Err(PyValueError::new_err(format!(

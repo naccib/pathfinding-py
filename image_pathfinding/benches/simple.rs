@@ -29,7 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("2D Dijkstra 600x600", |b| {
         b.iter(|| {
             dji2d.find_path_in_heatmap(
-                black_box(&array),
+                black_box(array.view()),
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
             )
@@ -39,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("2D A* 600x600", |b| {
         b.iter(|| {
             astar2d.find_path_in_heatmap(
-                black_box(&array),
+                black_box(array.view()),
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
             )
@@ -49,7 +49,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("2D Fringe 600x600", |b| {
         b.iter(|| {
             fringe2d.find_path_in_heatmap(
-                black_box(&array),
+                black_box(array.view()),
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
             )
@@ -82,7 +82,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         c.bench_function("Temporal Dijkstra find_route_over_time (120 frames)", |b| {
             b.iter(|| {
                 dijkstra_temporal.find_route_over_time(
-                    black_box(&volume),
+                    black_box(volume.view()),
                     Some(REACH),
                     Some(AXIS),
                     Some(starts.clone()),
@@ -94,7 +94,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         c.bench_function("Temporal A* find_route_over_time (120 frames)", |b| {
             b.iter(|| {
                 astar_temporal.find_route_over_time(
-                    black_box(&volume),
+                    black_box(volume.view()),
                     Some(REACH),
                     Some(AXIS),
                     Some(starts.clone()),

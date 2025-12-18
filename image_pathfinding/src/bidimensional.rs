@@ -1,4 +1,4 @@
-use numpy::ndarray::Array2;
+use numpy::ndarray::{Array2, ArrayView2};
 use pathfinding::prelude::{astar, dijkstra};
 
 /// A position in the image.
@@ -30,7 +30,7 @@ pub fn load_png_to_ndarray(path: &str) -> Array2<u8> {
 }
 
 /// Find the possible neighbours and their costs for a given pixel in a 2D ndarray.
-fn find_neighbours_with_cost(array: &Array2<u8>, pos: Pos2D) -> Vec<Pos2DWithCost> {
+fn find_neighbours_with_cost(array: ArrayView2<u8>, pos: Pos2D) -> Vec<Pos2DWithCost> {
     let mut neighbours = Vec::new();
 
     let (x, y) = pos;
@@ -97,7 +97,7 @@ pub trait ImagePathfinder2D {
     /// * `Option<(Vec<Pos2D>, u32)>` - The path found and the total cost, or `None` if no path was found.
     fn find_path_in_heatmap(
         &self,
-        array: &Array2<u8>,
+        array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
     ) -> Option<(Vec<Pos2D>, u32)>;
@@ -111,7 +111,7 @@ pub struct Dijkstra2D {}
 impl ImagePathfinder2D for Dijkstra2D {
     fn find_path_in_heatmap(
         &self,
-        array: &Array2<u8>,
+        array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
     ) -> Option<(Vec<Pos2D>, u32)> {
@@ -144,7 +144,7 @@ impl AStar2D {
 impl ImagePathfinder2D for AStar2D {
     fn find_path_in_heatmap(
         &self,
-        array: &Array2<u8>,
+        array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
     ) -> Option<(Vec<Pos2D>, u32)> {
@@ -179,7 +179,7 @@ impl Fringe2D {
 impl ImagePathfinder2D for Fringe2D {
     fn find_path_in_heatmap(
         &self,
-        array: &Array2<u8>,
+        array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
     ) -> Option<(Vec<Pos2D>, u32)> {

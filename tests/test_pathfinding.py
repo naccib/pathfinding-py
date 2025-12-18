@@ -105,7 +105,10 @@ def test_find_route_temporal_astar():
         y = min(t, 9)
         volume[t, y, x] = 20
 
-    result = pathfinding_py.find_route_temporal(volume, "astar")
+    start = (0, 0, 0)
+    end = (9, 9, 4)
+
+    result = pathfinding_py.find_route_temporal(volume, "astar", start, end)
 
     assert result is not None, "Route should be found"
     path, cost = result
@@ -125,7 +128,10 @@ def test_find_route_temporal_dijkstra():
     for t in range(3):
         volume[t, 0, t] = 30
 
-    result = pathfinding_py.find_route_temporal(volume, "dijkstra")
+    start = (0, 0, 0)
+    end = (4, 4, 2)
+
+    result = pathfinding_py.find_route_temporal(volume, "dijkstra", start, end)
 
     assert result is not None, "Route should be found"
     path, cost = result
@@ -145,18 +151,16 @@ def test_find_route_temporal_with_custom_starts_ends():
         y = 1 + t
         volume[t, y, x] = 15
 
-    starts = [(1, 1, 0)]
-    ends = [(4, 4, 3)]
+    start = (1, 1, 0)
+    end = (4, 4, 3)
 
-    result = pathfinding_py.find_route_temporal(
-        volume, "astar", starts=starts, ends=ends
-    )
+    result = pathfinding_py.find_route_temporal(volume, "astar", start, end)
 
     assert result is not None, "Route should be found"
     path, cost = result
     assert len(path) > 0, "Path should contain at least one point"
-    assert path[0] in starts, "Path should start at one of the start positions"
-    assert path[-1] in ends, "Path should end at one of the end positions"
+    assert path[0] == start, "Path should start at the start position"
+    assert path[-1] == end, "Path should end at the end position"
 
 
 def test_find_route_temporal_with_reach():
@@ -167,8 +171,11 @@ def test_find_route_temporal_with_reach():
     for t in range(3):
         volume[t, t * 2, t * 2] = 25
 
+    start = (0, 0, 0)
+    end = (6, 6, 2)
+
     # Test with reach=2
-    result = pathfinding_py.find_route_temporal(volume, "dijkstra", reach=2)
+    result = pathfinding_py.find_route_temporal(volume, "dijkstra", start, end, reach=2)
 
     assert result is not None, "Route should be found with reach=2"
     path, cost = result
@@ -178,9 +185,11 @@ def test_find_route_temporal_with_reach():
 def test_find_route_temporal_invalid_algorithm():
     """Test that invalid algorithm raises an error."""
     volume = np.ones((3, 5, 5), dtype=np.uint8) * 50
+    start = (0, 0, 0)
+    end = (4, 4, 2)
 
     with pytest.raises(Exception):  # Should raise ValueError or similar
-        pathfinding_py.find_route_temporal(volume, "invalid_algo")
+        pathfinding_py.find_route_temporal(volume, "invalid_algo", start, end)
 
 
 def test_2d_pathfinding_on_real_image():
@@ -258,17 +267,17 @@ def test_temporal_pathfinding_on_rotating_frames():
 
     # Convert 2D start/end positions to 3D (add time dimension)
     # Start at time 0, end at last frame
-    starts = [(start_pos[0], start_pos[1], 0)]
-    ends = [(end_pos[0], end_pos[1], num_frames - 1)]
+    start = (start_pos[0], start_pos[1], 0)
+    end = (end_pos[0], end_pos[1], num_frames - 1)
 
     # Test with A* algorithm
     result = pathfinding_py.find_route_temporal(
         volume,
         algorithm="astar",
+        start=start,
+        end=end,
         reach=reach,
         axis=2,  # Time axis
-        starts=starts,
-        ends=ends,
     )
 
     assert result is not None, "Route should be found through temporal volume"
@@ -276,8 +285,8 @@ def test_temporal_pathfinding_on_rotating_frames():
     assert len(route) > 0, "Route should contain at least one point"
 
     # Verify route starts and ends at correct positions
-    assert route[0] in starts, f"Route should start at one of {starts}, got {route[0]}"
-    assert route[-1] in ends, f"Route should end at one of {ends}, got {route[-1]}"
+    assert route[0] == start, f"Route should start at {start}, got {route[0]}"
+    assert route[-1] == end, f"Route should end at {end}, got {route[-1]}"
 
     # Verify route moves forward in time
     times = [pos[2] for pos in route]

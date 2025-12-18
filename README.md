@@ -2,6 +2,20 @@
 
 A high-performance pathfinding library implemented in Rust with Python bindings. This project provides efficient algorithms for finding optimal paths through 2D heatmaps and temporal volumes (3D sequences of images).
 
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install pathfinding-py
+```
+
+Or using `uv`:
+
+```bash
+uv pip install pathfinding-py
+```
+
 ## Features
 - **2D Pathfinding**: Find optimal paths through 2D heatmaps using pixel values as costs
 - **Temporal Pathfinding**: Route through 3D volumes (time series of images) with constraints

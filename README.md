@@ -199,22 +199,22 @@ import numpy as np
 import pathfinding_py
 
 # Create a temporal volume representing a moving obstacle
-volume = np.ones((5, 20, 20), dtype=np.uint8) * 100
+volume = np.ones((20, 20, 5), dtype=np.uint8) * 100
 
 # Create a path that moves diagonally through time
 for t in range(5):
     x = t * 2
     y = t * 2
-    volume[t, y, x] = 20  # Low cost path
+    volume[x, y, t] = 20  # Low cost path
 
 # Find route through the temporal volume
 result = pathfinding_py.find_route_temporal(
     volume,
     algorithm="astar",
-    start=(0, 0, 0),  # Start position (x, y, t)
-    end=(19, 19, 4),  # End position (x, y, t)
+    start=(0, 0, 0),  # Start position (x, y, t) i.e. (x=0, y=0, t=0)
+    end=(19, 19, 4),  # End position (x, y, t) i.e. (x=19, y=19, t=4)
     reach=1,
-    axis=2  # Time axis
+    axis=2  # Time axis i.e. 2
 )
 
 if result:

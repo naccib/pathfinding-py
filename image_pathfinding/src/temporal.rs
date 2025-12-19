@@ -9,8 +9,8 @@ pub type Pos3DWithCost = (Pos3D, u32);
 
 // MARK: Helpers
 
-/// Load a list of grayscale images into a temporal volume (Time, Height, Width).
-/// Note: Internally ndarray uses (Time, Height, Width) indexing, so [t, y, x].
+/// Load a list of grayscale images into a temporal volume (Width, Height, Time).
+/// Note: Internally ndarray uses (x, y, t) indexing, so [x, y, t].
 pub fn load_images_to_volume(paths: &[String]) -> Array3<u8> {
     if paths.is_empty() {
         return Array3::zeros((0, 0, 0));
@@ -23,7 +23,7 @@ pub fn load_images_to_volume(paths: &[String]) -> Array3<u8> {
     let (width, height) = first_img.dimensions();
     let depth = paths.len(); // Time dimension
 
-    let mut volume = Array3::zeros((depth, height as usize, width as usize));
+    let mut volume = Array3::zeros((width as usize, height as usize, depth));
 
     for (t, path) in paths.iter().enumerate() {
         let img = image::open(path)
@@ -37,7 +37,7 @@ pub fn load_images_to_volume(paths: &[String]) -> Array3<u8> {
         // Copy pixels
         for y in 0..height {
             for x in 0..width {
-                volume[[t, y as usize, x as usize]] = img.get_pixel(x, y)[0];
+                volume[[x as usize, y as usize, t]] = img.get_pixel(x, y)[0];
             }
         }
     }
@@ -54,7 +54,7 @@ fn find_neighbours_with_reach(
     reach: usize,
 ) -> Vec<Pos3DWithCost> {
     let (x, y, t) = pos;
-    let (depth, height, width) = volume.dim(); // (t, y, x)
+    let (width, height, depth) = volume.dim(); // (x, y, t)
 
     let mut neighbours = Vec::new();
 
@@ -118,7 +118,7 @@ fn find_neighbours_with_reach(
             let ny_u = ny as u32;
 
             // Cost is the value at the *destination* node
-            let cost = volume[[nt as usize, ny_u as usize, nx_u as usize]] as u32;
+            let cost = volume[[nx_u as usize, ny_u as usize, nt as usize]] as u32;
             neighbours.push(((nx_u, ny_u, nt), cost));
         }
     }
@@ -133,7 +133,7 @@ fn generate_positions_at_axis_index(
     axis: usize,
     index: usize,
 ) -> Vec<Pos3D> {
-    let (depth, height, width) = volume.dim();
+    let (width, height, depth) = volume.dim(); // (x, y, t)
     let mut positions = Vec::new();
 
     match axis {
@@ -175,7 +175,7 @@ fn generate_positions_at_axis_index(
 
 /// Generate default start positions (all positions at axis=0) or end positions (all positions at axis=-1).
 fn generate_default_starts_ends(volume: ArrayView3<u8>, axis: usize, is_start: bool) -> Vec<Pos3D> {
-    let (depth, height, width) = volume.dim();
+    let (width, height, depth) = volume.dim(); // (x, y, t)
     let axis = if axis >= 3 { 2 } else { axis };
 
     if is_start {
@@ -203,7 +203,7 @@ impl DijkstraTemporal {
     ///
     /// # Arguments
     ///
-    /// * `volume` - The temporal volume (Time, Height, Width)
+    /// * `volume` - The temporal volume (Width, Height, Time) i.e. (x, y, t)
     /// * `reach` - Number of elements that can be skipped along each non-axis dimension (default: 1)
     /// * `axis` - The axis along which the path must always move forward (default: 2 for time)
     /// * `starts` - Optional start positions. If None, uses all positions at axis=0
@@ -300,7 +300,7 @@ impl AStarTemporal {
     ///
     /// # Arguments
     ///
-    /// * `volume` - The temporal volume (Time, Height, Width)
+    /// * `volume` - The temporal volume (Width, Height, Time) i.e. (x, y, t)
     /// * `reach` - Number of elements that can be skipped along each non-axis dimension (default: 1)
     /// * `axis` - The axis along which the path must always move forward (default: 2 for time)
     /// * `starts` - Optional start positions. If None, uses all positions at axis=0

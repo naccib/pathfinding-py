@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 /// Find a path in a 2D heatmap using the specified algorithm.
 ///
 /// # Arguments
-/// * `array` - A 2D NumPy array with dtype uint8 (shape: height, width)
+/// * `array` - A 2D NumPy array with dtype uint8 (shape: x, y) i.e. (width, height)
 /// * `start` - Start position as (x, y) tuple
 /// * `end` - End position as (x, y) tuple
 /// * `algorithm` - Algorithm to use: "astar", "dijkstra", or "fringe"
@@ -23,9 +23,23 @@ fn find_path_2d(
     algorithm: &str,
 ) -> PyResult<Option<(Vec<(u32, u32)>, u32)>> {
     // PyReadonlyArray2<u8> enforces 2D array with u8 dtype at the Python binding level.
-    // This provides runtime validation from Python's perspective.
-    // Use the array view directly to avoid copying
+    // Arrays must be provided in (x, y) order, i.e. shape (width, height).
+    // Use the array view directly - no transposing.
     let array_2d = array.as_array();
+
+    let (width, height) = array_2d.dim();
+
+    let width = width as u32;
+    let height = height as u32;
+
+    if start.0 >= width || start.1 >= height || end.0 >= width || end.1 >= height {
+        return Err(PyValueError::new_err(format!(
+            "Start or end position is out of bounds: start={:?}, end={:?}, shape={:?}",
+            start,
+            end,
+            (width, height)
+        )));
+    }
 
     // Dispatch to appropriate algorithm
     let result = match algorithm.to_lowercase().as_str() {
@@ -46,7 +60,7 @@ fn find_path_2d(
 /// Find a route through a temporal volume using the specified algorithm.
 ///
 /// # Arguments
-/// * `array` - A 3D NumPy array with dtype uint8 (shape: time, height, width)
+/// * `array` - A 3D NumPy array with dtype uint8 (shape: x, y, t) i.e. (width, height, time)
 /// * `algorithm` - Algorithm to use: "astar" or "dijkstra"
 /// * `start` - Start position as (x, y, t) tuple
 /// * `end` - End position as (x, y, t) tuple
@@ -69,6 +83,26 @@ fn find_route_temporal(
     // This provides runtime validation from Python's perspective.
     // Use the array view directly to avoid copying
     let array_3d = array.as_array();
+
+    let (width, height, time) = array_3d.dim();
+    let width = width as u32;
+    let height = height as u32;
+    let time = time as u32;
+
+    if start.0 >= width
+        || start.1 >= height
+        || start.2 >= time
+        || end.0 >= width
+        || end.1 >= height
+        || end.2 >= time
+    {
+        return Err(PyValueError::new_err(format!(
+            "Start or end position is out of bounds: start={:?}, end={:?}, shape={:?}",
+            start,
+            end,
+            (width, height, time)
+        )));
+    }
 
     // Convert single points to vectors for the underlying function
     let starts = Some(vec![start]);

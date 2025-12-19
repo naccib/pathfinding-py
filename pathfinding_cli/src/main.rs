@@ -140,7 +140,7 @@ fn main() -> Result<()> {
         let ends = cli.end.map(|end| {
             // For temporal routing, if end is provided, we need to determine the time coordinate
             // Since routing moves along an axis, if axis=2 (time), we use the last frame
-            let (depth, _, _) = volume.dim();
+            let (_, _, depth) = volume.dim();
             let t = if cli.axis == 2 {
                 depth as u32 - 1
             } else {

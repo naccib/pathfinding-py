@@ -1,6 +1,6 @@
 # pathfinding-py
 
-A high-performance pathfinding library implemented in Rust with Python bindings. This project provides efficient algorithms for finding optimal paths through 2D heatmaps and temporal volumes (3D sequences of images).
+A zero-copy, high-performance pathfinding library implemented in Rust with Python bindings. This project provides efficient algorithms for finding optimal paths through 2D heatmaps and temporal volumes (3D sequences of images).
 
 The pathfinding algorithms are implemented in the `pathfinding` crate. We abstract their use over images and volumes in the `image_pathfinding` crate. This crate is then exposed to Python via the `pathfinding_py` crate.
 
@@ -147,7 +147,7 @@ The project uses `just` for task management. Run `just -l` to see all available 
 Find a path in a 2D heatmap.
 
 **Parameters:**
-- `array`: 2D NumPy array with dtype `uint8` (shape: height, width)
+- `array`: 2D NumPy array with dtype `uint8` (shape: x, y) i.e. (width, height)
 - `start`: Start position as `(x, y)` tuple
 - `end`: End position as `(x, y)` tuple
 - `algorithm`: Algorithm to use: `"astar"`, `"dijkstra"`, or `"fringe"`
@@ -160,7 +160,7 @@ Find a path in a 2D heatmap.
 Find a route through a temporal volume.
 
 **Parameters:**
-- `array`: 3D NumPy array with dtype `uint8` (shape: time, height, width)
+- `array`: 3D NumPy array with dtype `uint8` (shape: x, y, t) i.e. (width, height, time)
 - `algorithm`: Algorithm to use: `"astar"` or `"dijkstra"`
 - `start`: Start position as `(x, y, t)` tuple
 - `end`: End position as `(x, y, t)` tuple

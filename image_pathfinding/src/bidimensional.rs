@@ -10,23 +10,22 @@ pub type Pos2DWithCost = (Pos2D, u32);
 // MARK: Helpers
 
 /// Load a PNG image and convert it to a 2D ndarray (grayscale).
-/// Returns an Array2<u8> with shape (height, width).
+/// Returns an Array2<u8> with shape (width, height).
 pub fn load_png_to_ndarray(path: &str) -> Array2<u8> {
     let img = image::open(path)
         .expect(&format!("Failed to open image at {}", path))
         .to_luma8();
 
     let (width, height) = img.dimensions();
-    let mut pixels = Vec::with_capacity((width * height) as usize);
+    let mut array = Array2::zeros((width as usize, height as usize));
 
     for y in 0..height {
         for x in 0..width {
-            pixels.push(img.get_pixel(x, y)[0]);
+            array[[x as usize, y as usize]] = img.get_pixel(x, y)[0];
         }
     }
 
-    Array2::from_shape_vec((height as usize, width as usize), pixels)
-        .expect("Failed to create Array2 from pixels")
+    array
 }
 
 /// Find the possible neighbours and their costs for a given pixel in a 2D ndarray.
@@ -34,47 +33,47 @@ fn find_neighbours_with_cost(array: ArrayView2<u8>, pos: Pos2D) -> Vec<Pos2DWith
     let mut neighbours = Vec::new();
 
     let (x, y) = pos;
-    let (height, width) = array.dim();
+    let (width, height) = array.dim();
     let height = height as u32;
     let width = width as u32;
 
     // Cardinal neighbors (up, down, left, right)
     if x > 0 {
-        neighbours.push(((x - 1, y), array[[y as usize, (x - 1) as usize]] as u32));
+        neighbours.push(((x - 1, y), array[[(x - 1) as usize, y as usize]] as u32));
     }
     if x < width - 1 {
-        neighbours.push(((x + 1, y), array[[y as usize, (x + 1) as usize]] as u32));
+        neighbours.push(((x + 1, y), array[[(x + 1) as usize, y as usize]] as u32));
     }
     if y > 0 {
-        neighbours.push(((x, y - 1), array[[(y - 1) as usize, x as usize]] as u32));
+        neighbours.push(((x, y - 1), array[[x as usize, (y - 1) as usize]] as u32));
     }
     if y < height - 1 {
-        neighbours.push(((x, y + 1), array[[(y + 1) as usize, x as usize]] as u32));
+        neighbours.push(((x, y + 1), array[[x as usize, (y + 1) as usize]] as u32));
     }
 
     // Diagonal neighbors
     if x > 0 && y > 0 {
         neighbours.push((
             (x - 1, y - 1),
-            array[[(y - 1) as usize, (x - 1) as usize]] as u32,
+            array[[(x - 1) as usize, (y - 1) as usize]] as u32,
         ));
     }
     if x < width - 1 && y > 0 {
         neighbours.push((
             (x + 1, y - 1),
-            array[[(y - 1) as usize, (x + 1) as usize]] as u32,
+            array[[(x + 1) as usize, (y - 1) as usize]] as u32,
         ));
     }
     if x > 0 && y < height - 1 {
         neighbours.push((
             (x - 1, y + 1),
-            array[[(y + 1) as usize, (x - 1) as usize]] as u32,
+            array[[(x - 1) as usize, (y + 1) as usize]] as u32,
         ));
     }
     if x < width - 1 && y < height - 1 {
         neighbours.push((
             (x + 1, y + 1),
-            array[[(y + 1) as usize, (x + 1) as usize]] as u32,
+            array[[(x + 1) as usize, (y + 1) as usize]] as u32,
         ));
     }
 
@@ -88,7 +87,7 @@ pub trait ImagePathfinder2D {
     ///
     /// # Arguments
     ///
-    /// * `array` - The heatmap as a 2D ndarray with shape (height, width).
+    /// * `array` - The heatmap as a 2D ndarray with shape (width, height).
     /// * `start_pos` - The start position (x, y).
     /// * `end_pos` - The end position (x, y).
     ///

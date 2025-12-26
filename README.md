@@ -151,6 +151,7 @@ Find a path in a 2D heatmap.
 - `start`: Start position as `(x, y)` tuple
 - `end`: End position as `(x, y)` tuple
 - `algorithm`: Algorithm to use: `"astar"`, `"dijkstra"`, or `"fringe"`
+- `impassable` (optional): A value that, if provided, will be used to filter out neighbours that have this value.
 
 **Returns:**
 - `Optional[Tuple[List[Tuple[int, int]], int]]`: The path found and total cost, or `None` if no path was found

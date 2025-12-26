@@ -55,9 +55,16 @@ struct Cli {
     #[arg(long, default_value_t = 2)]
     axis: usize,
 
+    /// Impassable value. If provided, will be used to filter out neighbours that have this value.
+    #[arg(long, default_value = None)]
+    impassable: Option<u8>,
+
     /// Output directory
     #[arg(long, default_value = "/tmp")]
     output_dir: PathBuf,
+
+    #[arg(long, default_value = None)]
+    filename: Option<String>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -93,10 +100,14 @@ fn main() -> Result<()> {
 
         let path = match cli.algo {
             Algorithm::Dijkstra => {
-                Dijkstra2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy)
+                Dijkstra2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
             }
-            Algorithm::Astar => AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy),
-            Algorithm::Fringe => Fringe2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy),
+            Algorithm::Astar => {
+                AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+            }
+            Algorithm::Fringe => {
+                Fringe2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+            }
         };
 
         if let Some((points, cost)) = path {
@@ -112,10 +123,16 @@ fn main() -> Result<()> {
             let file_name = std::path::Path::new(img_path)
                 .file_name()
                 .unwrap_or_default();
+
+            let file_name = cli
+                .filename
+                .unwrap_or(file_name.to_string_lossy().to_string());
             let out_path = cli.output_dir.join(file_name);
+
             rgb_img
                 .save(&out_path)
                 .context("Failed to save output image")?;
+
             println!("Saved result to {:?}", out_path);
         } else {
             println!("No path found!");

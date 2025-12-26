@@ -9,7 +9,23 @@ video:
 
 # Run 2D pathfinding on a single image
 test:
-    cargo run --release -p pathfinding_cli -- --start 269 172 --end 470 263 --algo astar --output-dir output_test assets/black-on-white-lv-like-heatmap.png
+    rm -rf /tmp/pathfinding-test/
+    mkdir -p /tmp/pathfinding-test/
+
+    cargo run -p pathfinding_cli -- --start 269 172 --end 470 263 --algo astar --output-dir /tmp/pathfinding-test assets/black-on-white-lv-like-heatmap.png
+    
+    cargo run -p pathfinding_cli -- \
+        --start 186 85 --end 312 97 --impassable 18 --algo astar --output-dir /tmp/pathfinding-test \
+        --filename "lv-with-impassable-barrier-and-impassable-equals-18.png" \
+        assets/lv-with-impassable-barrier.png
+
+    cargo run -p pathfinding_cli -- \
+        --start 186 85 --end 312 97 --algo astar --output-dir /tmp/pathfinding-test \
+        --filename "lv-with-impassable-barrier-no-impassable-value.png" \
+        assets/lv-with-impassable-barrier.png
+
+    open /tmp/pathfinding-test/ -a Finder
+
 
 # Run Python integration tests for pathfinding_py
 test-python:

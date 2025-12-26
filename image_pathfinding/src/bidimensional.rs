@@ -29,7 +29,20 @@ pub fn load_png_to_ndarray(path: &str) -> Array2<u8> {
 }
 
 /// Find the possible neighbours and their costs for a given pixel in a 2D ndarray.
-fn find_neighbours_with_cost(array: ArrayView2<u8>, pos: Pos2D) -> Vec<Pos2DWithCost> {
+/// Returns a vector of tuples, where each tuple contains a position and a cost.
+///
+/// # Arguments
+/// * `array` - The 2D ndarray to find neighbours in.
+/// * `pos` - The position to find neighbours for.
+/// * `impassable` - An optional value that, if provided, will be used to filter out neighbours that have this value.
+///
+/// # Returns
+/// * `Vec<Pos2DWithCost>` - A vector of tuples, where each tuple contains a position and a cost.
+fn find_neighbours_with_cost(
+    array: ArrayView2<u8>,
+    pos: Pos2D,
+    impassable: Option<u8>,
+) -> Vec<Pos2DWithCost> {
     let mut neighbours = Vec::new();
 
     let (x, y) = pos;
@@ -77,6 +90,10 @@ fn find_neighbours_with_cost(array: ArrayView2<u8>, pos: Pos2D) -> Vec<Pos2DWith
         ));
     }
 
+    if let Some(impassable) = impassable {
+        neighbours.retain(|(_, cost)| *cost != impassable as u32);
+    }
+
     neighbours
 }
 
@@ -99,6 +116,7 @@ pub trait ImagePathfinder2D {
         array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
+        impassable: Option<u8>,
     ) -> Option<(Vec<Pos2D>, u32)>;
 }
 
@@ -113,10 +131,11 @@ impl ImagePathfinder2D for Dijkstra2D {
         array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
+        impassable: Option<u8>,
     ) -> Option<(Vec<Pos2D>, u32)> {
         let result = dijkstra(
             &start_pos,
-            |&p| find_neighbours_with_cost(array, p),
+            |&p| find_neighbours_with_cost(array, p, impassable),
             |&p| p == end_pos,
         );
 
@@ -146,10 +165,11 @@ impl ImagePathfinder2D for AStar2D {
         array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
+        impassable: Option<u8>,
     ) -> Option<(Vec<Pos2D>, u32)> {
         let result = astar(
             &start_pos,
-            |&p| find_neighbours_with_cost(array, p),
+            |&p| find_neighbours_with_cost(array, p, impassable),
             // the minumum cost is the manhattan distance
             |&p| self.manhattan_distance(p, end_pos),
             |&p| p == end_pos,
@@ -181,10 +201,11 @@ impl ImagePathfinder2D for Fringe2D {
         array: ArrayView2<u8>,
         start_pos: Pos2D,
         end_pos: Pos2D,
+        impassable: Option<u8>,
     ) -> Option<(Vec<Pos2D>, u32)> {
         let result = pathfinding::prelude::fringe(
             &start_pos,
-            |&p| find_neighbours_with_cost(array, p),
+            |&p| find_neighbours_with_cost(array, p, impassable),
             |&p| self.manhattan_distance(p, end_pos),
             |&p| p == end_pos,
         );

@@ -12,7 +12,9 @@ test:
     rm -rf /tmp/pathfinding-test/
     mkdir -p /tmp/pathfinding-test/
 
-    cargo run -p pathfinding_cli -- --start 269 172 --end 470 263 --algo dijkstra --output-dir /tmp/pathfinding-test assets/black-on-white-lv-like-heatmap.png
+    cargo run -p pathfinding_cli -- --start 269 172 --end 470 263 --algo dijkstra --output-dir /tmp/pathfinding-test \
+        --filename "black-on-white-lv-like-heatmap.png" \
+        assets/black-on-white-lv-like-heatmap.png
     
     cargo run -p pathfinding_cli -- \
         --start 186 85 --end 312 97 --impassable 255 --algo dijkstra --output-dir /tmp/pathfinding-test \
@@ -22,6 +24,20 @@ test:
     cargo run -p pathfinding_cli -- \
         --start 186 85 --end 312 97 --algo dijkstra --output-dir /tmp/pathfinding-test \
         --filename "lv-with-impassable-barrier-no-impassable-value.png" \
+        assets/lv-with-impassable-barrier.png
+
+    cargo run -p pathfinding_cli -- --start 269 172 --end 470 263 --algo astar --output-dir /tmp/pathfinding-test \
+        --filename "black-on-white-lv-like-heatmap-astar.png" \
+        assets/black-on-white-lv-like-heatmap.png
+    
+    cargo run -p pathfinding_cli -- \
+        --start 186 85 --end 312 97 --impassable 255 --algo astar --output-dir /tmp/pathfinding-test \
+        --filename "lv-with-impassable-barrier-and-impassable-equals-255-astar.png" \
+        assets/lv-with-impassable-barrier.png
+
+    cargo run -p pathfinding_cli -- \
+        --start 186 85 --end 312 97 --algo astar --output-dir /tmp/pathfinding-test \
+        --filename "lv-with-impassable-barrier-no-impassable-value-astar.png" \
         assets/lv-with-impassable-barrier.png
 
     open /tmp/pathfinding-test/ -a Finder

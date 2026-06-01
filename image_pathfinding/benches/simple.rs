@@ -10,6 +10,10 @@ const IMAGE_PATH_2D: &str = "../assets/black-on-white-lv-like-heatmap.png";
 const START_POS_2D: Pos2D = (269, 172);
 const END_POS_2D: Pos2D = (470, 263);
 
+const IMAGE_PATH_IMPASSABLE_2D: &str = "../assets/lv-with-impassable-barrier.png";
+const START_POS_IMPASSABLE_2D: Pos2D = (186, 85);
+const END_POS_IMPASSABLE_2D: Pos2D = (312, 97);
+
 const FRAMES_DIR_3D: &str = "../assets/black-on-white-lv-like-heatmap-rotating";
 const START_POS_3D_X: u32 = 269;
 const START_POS_3D_Y: u32 = 172;
@@ -21,6 +25,7 @@ const AXIS: usize = 2;
 fn criterion_benchmark(c: &mut Criterion) {
     // 2D Setup
     let array = load_png_to_ndarray(IMAGE_PATH_2D);
+    let array_impassable = load_png_to_ndarray(IMAGE_PATH_IMPASSABLE_2D);
 
     let dji2d = Dijkstra2D {};
     let astar2d = AStar2D {};
@@ -55,6 +60,39 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
                 None,
+            )
+        })
+    });
+
+    c.bench_function("2D Dijkstra impassable 600x600", |b| {
+        b.iter(|| {
+            dji2d.find_path_in_heatmap(
+                black_box(array_impassable.view()),
+                black_box(START_POS_IMPASSABLE_2D),
+                black_box(END_POS_IMPASSABLE_2D),
+                Some(255u8),
+            )
+        })
+    });
+
+    c.bench_function("2D A* impassable 600x600", |b| {
+        b.iter(|| {
+            astar2d.find_path_in_heatmap(
+                black_box(array_impassable.view()),
+                black_box(START_POS_IMPASSABLE_2D),
+                black_box(END_POS_IMPASSABLE_2D),
+                Some(255u8),
+            )
+        })
+    });
+
+    c.bench_function("2D Fringe impassable 600x600", |b| {
+        b.iter(|| {
+            fringe2d.find_path_in_heatmap(
+                black_box(array_impassable.view()),
+                black_box(START_POS_IMPASSABLE_2D),
+                black_box(END_POS_IMPASSABLE_2D),
+                Some(255u8),
             )
         })
     });

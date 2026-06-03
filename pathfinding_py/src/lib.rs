@@ -1,5 +1,5 @@
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, Fringe2D, ImagePathfinder2D,
+    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
 };
 use numpy::{PyReadonlyArray2, PyReadonlyArray3};
 use pyo3::exceptions::PyValueError;
@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 /// * `array` - A 2D NumPy array with dtype uint8 (shape: x, y) i.e. (width, height)
 /// * `start` - Start position as (x, y) tuple
 /// * `end` - End position as (x, y) tuple
-/// * `algorithm` - Algorithm to use: "astar", "dijkstra", or "fringe"
+/// * `algorithm` - Algorithm to use: "astar" or "dijkstra"
 /// * `impassable` - Optional: A value that, if provided, will be used to filter out neighbours that have this value.
 ///
 /// # Returns
@@ -48,10 +48,9 @@ fn find_path_2d(
     let result = match algorithm.to_lowercase().as_str() {
         "astar" => AStar2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable),
         "dijkstra" => Dijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable),
-        "fringe" => Fringe2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable),
         _ => {
             return Err(PyValueError::new_err(format!(
-                "Unknown algorithm: {}. Supported algorithms: astar, dijkstra, fringe",
+                "Unknown algorithm: {}. Supported algorithms: astar, dijkstra",
                 algorithm
             )));
         }

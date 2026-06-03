@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, Fringe2D, ImagePathfinder2D, Pos2D,
+    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D, Pos2D,
     load_images_to_volume, load_png_to_ndarray,
 };
 use std::hint::black_box;
@@ -29,7 +29,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let dji2d = Dijkstra2D {};
     let astar2d = AStar2D {};
-    let fringe2d = Fringe2D {};
 
     c.bench_function("2D Dijkstra 600x600", |b| {
         b.iter(|| {
@@ -53,17 +52,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("2D Fringe 600x600", |b| {
-        b.iter(|| {
-            fringe2d.find_path_in_heatmap(
-                black_box(array.view()),
-                black_box(START_POS_2D),
-                black_box(END_POS_2D),
-                None,
-            )
-        })
-    });
-
     c.bench_function("2D Dijkstra impassable 600x600", |b| {
         b.iter(|| {
             dji2d.find_path_in_heatmap(
@@ -78,17 +66,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("2D A* impassable 600x600", |b| {
         b.iter(|| {
             astar2d.find_path_in_heatmap(
-                black_box(array_impassable.view()),
-                black_box(START_POS_IMPASSABLE_2D),
-                black_box(END_POS_IMPASSABLE_2D),
-                Some(255u8),
-            )
-        })
-    });
-
-    c.bench_function("2D Fringe impassable 600x600", |b| {
-        b.iter(|| {
-            fringe2d.find_path_in_heatmap(
                 black_box(array_impassable.view()),
                 black_box(START_POS_IMPASSABLE_2D),
                 black_box(END_POS_IMPASSABLE_2D),

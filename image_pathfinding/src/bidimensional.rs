@@ -318,38 +318,3 @@ impl ImagePathfinder2D for AStar2D {
         None
     }
 }
-
-// MARK: Fringe
-
-pub struct Fringe2D {}
-
-impl Fringe2D {
-    fn manhattan_distance(&self, pos: Pos2D, end_pos: Pos2D) -> u32 {
-        let (x1, y1) = pos;
-        let (x2, y2) = end_pos;
-        (x1.abs_diff(x2) + y1.abs_diff(y2)) as u32
-    }
-}
-
-impl ImagePathfinder2D for Fringe2D {
-    fn find_path_in_heatmap(
-        &self,
-        array: ArrayView2<u8>,
-        start_pos: Pos2D,
-        end_pos: Pos2D,
-        impassable: Option<u8>,
-    ) -> Option<(Vec<Pos2D>, u32)> {
-        let result = pathfinding::prelude::fringe(
-            &start_pos,
-            |&p| find_neighbours_with_cost(array, p, impassable),
-            |&p| self.manhattan_distance(p, end_pos),
-            |&p| p == end_pos,
-        );
-
-        if let Some((path, costs)) = result {
-            return Some((path, costs));
-        }
-
-        None
-    }
-}

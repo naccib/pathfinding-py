@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use image::{Rgb, RgbImage};
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, Fringe2D, ImagePathfinder2D,
+    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
     load_images_to_volume, load_png_to_ndarray,
 };
 use std::fs;
@@ -71,7 +71,6 @@ struct Cli {
 enum Algorithm {
     Astar,
     Dijkstra,
-    Fringe,
 }
 
 fn main() -> Result<()> {
@@ -104,9 +103,6 @@ fn main() -> Result<()> {
             }
             Algorithm::Astar => {
                 AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
-            }
-            Algorithm::Fringe => {
-                Fringe2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
             }
         };
 
@@ -193,11 +189,6 @@ fn main() -> Result<()> {
                 starts,
                 ends,
             ),
-            Algorithm::Fringe => {
-                anyhow::bail!(
-                    "Fringe algorithm is not supported for temporal routing. Use Dijkstra or Astar instead."
-                );
-            }
         };
 
         if let Some((points, cost)) = path {

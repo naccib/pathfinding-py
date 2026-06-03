@@ -59,25 +59,6 @@ def test_find_path_2d_dijkstra():
     assert path[-1] == end, "Path should end at the end position"
 
 
-def test_find_path_2d_fringe():
-    """Test 2D pathfinding with Fringe algorithm."""
-    array = np.ones((8, 8), dtype=np.uint8) * 100
-
-    for i in range(8):
-        array[i, i] = 20
-
-    start = (0, 0)
-    end = (7, 7)
-
-    result = pathfinding_py.find_path_2d(array, start, end, "fringe")
-
-    assert result is not None, "Path should be found"
-    path, cost = result
-    assert len(path) > 0, "Path should contain at least one point"
-    assert path[0] == start, "Path should start at the start position"
-    assert path[-1] == end, "Path should end at the end position"
-
-
 def test_find_path_2d_invalid_algorithm():
     """Test that invalid algorithm raises an error."""
     array = np.ones((5, 5), dtype=np.uint8) * 50

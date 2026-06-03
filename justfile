@@ -2,6 +2,10 @@
 bench:
     cd image_pathfinding && cargo bench
 
+# Profile Dijkstra2D and print self-time per source line (macOS; needs samply)
+profile iters="12000" rate="4000":
+    image_pathfinding/profiling/profile_dijkstra.sh {{iters}} {{rate}}
+
 # Run temporal pathfinding on rotating frames and create a video
 video:
     cargo run --release -p pathfinding_cli -- --start 269 172 --end 413 260 --algo astar --reach 2 assets/black-on-white-lv-like-heatmap-rotating/*.png

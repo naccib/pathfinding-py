@@ -162,13 +162,20 @@ impl ImagePathfinder2D for Dijkstra2D {
         let mut dist = vec![u32::MAX; n];
         let mut came_from = vec![u32::MAX; n];
 
-        // Dial's algorithm. Edge costs are pixel values bounded to `1..=255`, so every
-        // node still on the frontier has a distance within 255 of the one being settled.
-        // A circular array of `NUM_BUCKETS` buckets (indexed by `distance % NUM_BUCKETS`)
-        // therefore holds the entire frontier at once, with each distinct distance landing
-        // in its own bucket. That gives O(1) push and pop in place of the binary heap's
-        // O(log n) — and the heap dominated the profile.
-        const NUM_BUCKETS: usize = 256; // u8 weights => max edge cost 255 => window of 256
+        // A diagonal step costs ~1.5x a cardinal one. The cardinal cost is the destination
+        // pixel value unchanged; the diagonal cost is `pixel + pixel / 2 = floor(1.5 * pixel)`,
+        // computed with a shift. We deliberately do *not* scale every cost by 2 to make 1.5
+        // exact (3/2): that would double every distance and, since Dial's has an O(maxDist)
+        // bucket-scan term, measurably slow the search. So 1.5x is exact for even pixel values
+        // and rounds down for odd ones.
+
+        // Dial's algorithm. The max edge cost is the largest diagonal cost, `255 + 255 / 2 =
+        // 382`, so every node still on the frontier has a distance within that of the one being
+        // settled. A circular array of `NUM_BUCKETS` buckets (indexed by `distance % NUM_BUCKETS`)
+        // therefore holds the entire frontier at once, each distinct distance landing in its own
+        // bucket — O(1) push and pop in place of the binary heap's O(log n). `NUM_BUCKETS` is a
+        // power of two larger than the max edge cost, so `% NUM_BUCKETS` compiles to a bitmask.
+        const NUM_BUCKETS: usize = 512; // power of two > 382 (max diagonal edge cost)
         let mut buckets: [Vec<u32>; NUM_BUCKETS] = std::array::from_fn(|_| Vec::new());
         let mut queued = 0usize; // entries across all buckets (including stale ones)
 
@@ -209,17 +216,20 @@ impl ImagePathfinder2D for Dijkstra2D {
                 let has_up = y > 0;
                 let has_down = y + 1 < height;
 
-                // Relax the edge into a neighbour pixel; the edge cost is the destination
-                // pixel's value, matching `find_neighbours_with_cost`.
+                // Relax the edge into a neighbour pixel. A cardinal move costs the destination
+                // pixel value; a diagonal move costs `pixel + pixel / 2` (~1.5x). `$diag` is a
+                // bool literal, so the branch is resolved at compile time. The impassable test
+                // uses the raw pixel value and so is independent of the move direction.
                 macro_rules! relax {
-                    ($nidx:expr) => {{
+                    ($nidx:expr, $diag:expr) => {{
                         let nidx = $nidx;
-                        let cost = grid[nidx] as u32;
+                        let pixel = grid[nidx] as u32;
                         let passable = match impassable {
-                            Some(im) => cost != im,
+                            Some(im) => pixel != im,
                             None => true,
                         };
                         if passable {
+                            let cost = if $diag { pixel + (pixel >> 1) } else { pixel };
                             let nd = cur + cost;
                             if nd < dist[nidx] {
                                 dist[nidx] = nd;
@@ -233,29 +243,29 @@ impl ImagePathfinder2D for Dijkstra2D {
 
                 // Cardinal neighbours.
                 if has_left {
-                    relax!(u - height);
+                    relax!(u - height, false);
                 }
                 if has_right {
-                    relax!(u + height);
+                    relax!(u + height, false);
                 }
                 if has_up {
-                    relax!(u - 1);
+                    relax!(u - 1, false);
                 }
                 if has_down {
-                    relax!(u + 1);
+                    relax!(u + 1, false);
                 }
-                // Diagonal neighbours.
+                // Diagonal neighbours cost ~1.5x as much.
                 if has_left && has_up {
-                    relax!(u - height - 1);
+                    relax!(u - height - 1, true);
                 }
                 if has_right && has_up {
-                    relax!(u + height - 1);
+                    relax!(u + height - 1, true);
                 }
                 if has_left && has_down {
-                    relax!(u - height + 1);
+                    relax!(u - height + 1, true);
                 }
                 if has_right && has_down {
-                    relax!(u + height + 1);
+                    relax!(u + height + 1, true);
                 }
             }
 

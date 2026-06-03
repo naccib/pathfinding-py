@@ -37,7 +37,7 @@ pub fn load_images_to_volume(paths: &[String]) -> Array3<u8> {
         // Copy pixels
         for y in 0..height {
             for x in 0..width {
-                volume[[x as usize, y as usize, t]] = img.get_pixel(x, y)[0];
+                volume[[x as usize, y as usize, t]] = img.get_pixel(x, y)[0].max(1);
             }
         }
     }

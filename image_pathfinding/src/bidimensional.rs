@@ -21,7 +21,7 @@ pub fn load_png_to_ndarray(path: &str) -> Array2<u8> {
 
     for y in 0..height {
         for x in 0..width {
-            array[[x as usize, y as usize]] = img.get_pixel(x, y)[0];
+            array[[x as usize, y as usize]] = img.get_pixel(x, y)[0].max(1);
         }
     }
 

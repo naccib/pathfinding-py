@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use image::{Rgb, RgbImage};
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
+    AStar2D, AStarTemporal, BiDijkstra2D, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
     load_images_to_volume, load_png_to_ndarray,
 };
 use std::fs;
@@ -75,6 +75,9 @@ struct Cli {
 enum Algorithm {
     Astar,
     Dijkstra,
+    /// Bidirectional Dijkstra (2D only).
+    #[value(alias = "bidijkstra", alias = "bidirectional")]
+    BiDijkstra,
 }
 
 fn main() -> Result<()> {
@@ -113,6 +116,15 @@ fn main() -> Result<()> {
             }
             Algorithm::Astar => {
                 AStar2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
+            }
+            Algorithm::BiDijkstra => {
+                BiDijkstra2D {}.find_path_in_heatmap(
                     array.view(),
                     start_xy,
                     end_xy,
@@ -205,6 +217,9 @@ fn main() -> Result<()> {
                 starts,
                 ends,
             ),
+            Algorithm::BiDijkstra => {
+                anyhow::bail!("bidijkstra is only available for 2D (single-image) pathfinding")
+            }
         };
 
         if let Some((points, cost)) = path {

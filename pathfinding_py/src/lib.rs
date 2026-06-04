@@ -1,5 +1,5 @@
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
+    AStar2D, AStarTemporal, BiDijkstra2D, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
 };
 use numpy::{PyReadonlyArray2, PyReadonlyArray3};
 use pyo3::exceptions::PyValueError;
@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 /// * `array` - A 2D NumPy array with dtype uint8 (shape: x, y) i.e. (width, height)
 /// * `start` - Start position as (x, y) tuple
 /// * `end` - End position as (x, y) tuple
-/// * `algorithm` - Algorithm to use: "astar" or "dijkstra"
+/// * `algorithm` - Algorithm to use: "astar", "dijkstra", or "bidijkstra" (bidirectional Dijkstra)
 /// * `impassable` - Optional: A value that, if provided, will be used to filter out neighbours that have this value.
 /// * `max_cost` - Optional: A cost budget. If provided, the search returns None as soon as it can
 ///   prove no path to the end costs <= max_cost. Paths costing exactly max_cost are still returned.
@@ -53,9 +53,12 @@ fn find_path_2d(
         "dijkstra" => {
             Dijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable, max_cost)
         }
+        "bidijkstra" | "bidirectional" => {
+            BiDijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable, max_cost)
+        }
         _ => {
             return Err(PyValueError::new_err(format!(
-                "Unknown algorithm: {}. Supported algorithms: astar, dijkstra",
+                "Unknown algorithm: {}. Supported algorithms: astar, dijkstra, bidijkstra",
                 algorithm
             )));
         }

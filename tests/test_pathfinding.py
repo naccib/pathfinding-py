@@ -59,6 +59,50 @@ def test_find_path_2d_dijkstra():
     assert path[-1] == end, "Path should end at the end position"
 
 
+def test_find_path_2d_bidijkstra():
+    """Test 2D pathfinding with bidirectional Dijkstra algorithm."""
+    array = np.ones((5, 5), dtype=np.uint8) * 50
+
+    array[0, :] = 10  # Top row
+    array[:, 4] = 10  # Right column
+
+    start = (0, 0)
+    end = (4, 4)
+
+    result = pathfinding_py.find_path_2d(array, start, end, "bidijkstra")
+
+    assert result is not None, "Path should be found"
+    path, cost = result
+    assert len(path) > 0, "Path should contain at least one point"
+    assert path[0] == start, "Path should start at the start position"
+    assert path[-1] == end, "Path should end at the end position"
+
+
+def test_find_path_2d_bidijkstra_matches_dijkstra():
+    """Bidirectional Dijkstra must return the same optimal cost as plain Dijkstra."""
+    rng = np.random.default_rng(1234)
+
+    for _ in range(25):
+        w = int(rng.integers(2, 30))
+        h = int(rng.integers(2, 30))
+        array = rng.integers(1, 50, size=(w, h), dtype=np.uint8)
+
+        start = (int(rng.integers(0, w)), int(rng.integers(0, h)))
+        end = (int(rng.integers(0, w)), int(rng.integers(0, h)))
+
+        dijkstra = pathfinding_py.find_path_2d(array, start, end, "dijkstra")
+        bidir = pathfinding_py.find_path_2d(array, start, end, "bidijkstra")
+
+        assert (dijkstra is None) == (bidir is None), "existence must agree"
+        if dijkstra is not None:
+            assert dijkstra[1] == bidir[1], (
+                f"cost mismatch on {w}x{h} {start}->{end}: "
+                f"dijkstra={dijkstra[1]} bidijkstra={bidir[1]}"
+            )
+            assert bidir[0][0] == start
+            assert bidir[0][-1] == end
+
+
 def test_find_path_2d_max_cost_cutoff():
     """A max_cost budget rejects paths costing more than it, keeps those within it."""
     array = np.ones((5, 5), dtype=np.uint8) * 50

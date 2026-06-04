@@ -59,6 +59,10 @@ struct Cli {
     #[arg(long, default_value = None)]
     impassable: Option<u8>,
 
+    /// Cost budget. If provided, the search gives up once no path to the end can cost <= this value.
+    #[arg(long, default_value = None)]
+    max_cost: Option<u32>,
+
     /// Output directory
     #[arg(long, default_value = "/tmp")]
     output_dir: PathBuf,
@@ -99,10 +103,22 @@ fn main() -> Result<()> {
 
         let path = match cli.algo {
             Algorithm::Dijkstra => {
-                Dijkstra2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+                Dijkstra2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
             }
             Algorithm::Astar => {
-                AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+                AStar2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
             }
         };
 

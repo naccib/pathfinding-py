@@ -37,6 +37,9 @@ pub trait ImagePathfinder2D {
     /// * `array` - The heatmap as a 2D ndarray with shape (width, height).
     /// * `start_pos` - The start position (x, y).
     /// * `end_pos` - The end position (x, y).
+    /// * `max_cost` - Optional cost budget. If provided, the search abandons as soon as it can
+    ///   prove no path to the goal costs `<= max_cost`, returning `None`. Paths costing exactly
+    ///   `max_cost` are still accepted.
     ///
     /// # Returns
     ///
@@ -47,6 +50,7 @@ pub trait ImagePathfinder2D {
         start_pos: Pos2D,
         end_pos: Pos2D,
         impassable: Option<u8>,
+        max_cost: Option<u32>,
     ) -> Option<(Vec<Pos2D>, u32)>;
 }
 
@@ -62,6 +66,7 @@ impl ImagePathfinder2D for Dijkstra2D {
         start_pos: Pos2D,
         end_pos: Pos2D,
         impassable: Option<u8>,
+        max_cost: Option<u32>,
     ) -> Option<(Vec<Pos2D>, u32)> {
         let (width, height) = array.dim();
         if width == 0 || height == 0 {
@@ -122,6 +127,15 @@ impl ImagePathfinder2D for Dijkstra2D {
             // passes a non-empty bucket, so every queued distance is always `>= cur`.
             while buckets[cur as usize % NUM_BUCKETS].is_empty() {
                 cur += 1;
+            }
+
+            // Cost cutoff: Dial's settles nodes in non-decreasing distance order, so `cur` is a
+            // lower bound on every node still on the frontier. Once it exceeds the budget, no
+            // remaining node — the goal included — can be reached within budget, so stop.
+            if let Some(cap) = max_cost {
+                if cur > cap {
+                    break 'search;
+                }
             }
 
             let b = cur as usize % NUM_BUCKETS;
@@ -203,7 +217,12 @@ impl ImagePathfinder2D for Dijkstra2D {
             cur += 1;
         }
 
-        if dist[end_idx] == u32::MAX {
+        // `dist[end_idx]` is set during relaxation, before the goal is popped, so the early
+        // `break` alone can leave a tentative over-budget cost here. Reject it explicitly: at the
+        // point the cutoff fires every node with a final distance `<= cap` is already settled, so
+        // `dist[end_idx]` is either its true optimum (`<= cap`) or genuinely exceeds the budget.
+        let found = dist[end_idx];
+        if found == u32::MAX || max_cost.is_some_and(|cap| found > cap) {
             return None;
         }
 
@@ -235,6 +254,7 @@ impl ImagePathfinder2D for AStar2D {
         start_pos: Pos2D,
         end_pos: Pos2D,
         impassable: Option<u8>,
+        max_cost: Option<u32>,
     ) -> Option<(Vec<Pos2D>, u32)> {
         let (width, height) = array.dim();
         if width == 0 || height == 0 {
@@ -293,6 +313,15 @@ impl ImagePathfinder2D for AStar2D {
         'search: while queued > 0 {
             while buckets[cur as usize % NUM_BUCKETS].is_empty() {
                 cur += 1;
+            }
+
+            // Cost cutoff: `cur` is the current `f = g + h` level and only grows. Because the
+            // heuristic is admissible, `f` never overestimates the cost of a path through a node,
+            // so once `cur > cap` no frontier node can reach the goal within budget — stop.
+            if let Some(cap) = max_cost {
+                if cur > cap {
+                    break 'search;
+                }
             }
 
             let b = cur as usize % NUM_BUCKETS;
@@ -373,7 +402,12 @@ impl ImagePathfinder2D for AStar2D {
             cur += 1;
         }
 
-        if g[end_idx] == u32::MAX {
+        // As in Dijkstra2D, `g[end_idx]` may hold a tentative over-budget cost when the cutoff
+        // fires before the goal is popped, so reject `found > cap` explicitly rather than relying
+        // on the early `break`. (This, like A*'s optimality itself, assumes an admissible
+        // heuristic; see the `heuristic!` note above.)
+        let found = g[end_idx];
+        if found == u32::MAX || max_cost.is_some_and(|cap| found > cap) {
             return None;
         }
 

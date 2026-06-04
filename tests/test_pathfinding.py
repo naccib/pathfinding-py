@@ -59,6 +59,41 @@ def test_find_path_2d_dijkstra():
     assert path[-1] == end, "Path should end at the end position"
 
 
+def test_find_path_2d_max_cost_cutoff():
+    """A max_cost budget rejects paths costing more than it, keeps those within it."""
+    array = np.ones((5, 5), dtype=np.uint8) * 50
+
+    start = (0, 0)
+    end = (4, 4)
+
+    # Baseline: discover the true optimal cost with no budget.
+    baseline = pathfinding_py.find_path_2d(array, start, end, "dijkstra")
+    assert baseline is not None
+    _, optimal_cost = baseline
+
+    # A budget below the optimum yields no path.
+    assert (
+        pathfinding_py.find_path_2d(
+            array, start, end, "dijkstra", max_cost=optimal_cost - 1
+        )
+        is None
+    )
+
+    # A budget exactly at the optimum still returns the optimal path (cap is inclusive).
+    at_cap = pathfinding_py.find_path_2d(
+        array, start, end, "dijkstra", max_cost=optimal_cost
+    )
+    assert at_cap is not None
+    assert at_cap[1] == optimal_cost
+
+    # A generous budget is identical to no budget.
+    generous = pathfinding_py.find_path_2d(
+        array, start, end, "dijkstra", max_cost=optimal_cost + 1000
+    )
+    assert generous is not None
+    assert generous[1] == optimal_cost
+
+
 def test_find_path_2d_invalid_algorithm():
     """Test that invalid algorithm raises an error."""
     array = np.ones((5, 5), dtype=np.uint8) * 50

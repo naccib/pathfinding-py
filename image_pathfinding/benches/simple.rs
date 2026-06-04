@@ -37,6 +37,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
                 None,
+                None,
             )
         })
     });
@@ -47,6 +48,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(array.view()),
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
+                None,
                 None,
             )
         })
@@ -59,6 +61,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_IMPASSABLE_2D),
                 black_box(END_POS_IMPASSABLE_2D),
                 Some(255u8),
+                None,
             )
         })
     });
@@ -70,6 +73,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_IMPASSABLE_2D),
                 black_box(END_POS_IMPASSABLE_2D),
                 Some(255u8),
+                None,
             )
         })
     });

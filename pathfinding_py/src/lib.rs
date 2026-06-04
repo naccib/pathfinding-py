@@ -13,17 +13,20 @@ use pyo3::prelude::*;
 /// * `end` - End position as (x, y) tuple
 /// * `algorithm` - Algorithm to use: "astar" or "dijkstra"
 /// * `impassable` - Optional: A value that, if provided, will be used to filter out neighbours that have this value.
+/// * `max_cost` - Optional: A cost budget. If provided, the search returns None as soon as it can
+///   prove no path to the end costs <= max_cost. Paths costing exactly max_cost are still returned.
 ///
 /// # Returns
 /// * `Optional[Tuple[List[Tuple[int, int]], int]]` - The path found and total cost, or None if no path was found
 #[pyfunction]
-#[pyo3(signature = (array, start, end, algorithm, *, impassable=None))]
+#[pyo3(signature = (array, start, end, algorithm, *, impassable=None, max_cost=None))]
 fn find_path_2d(
     array: PyReadonlyArray2<u8>,
     start: (u32, u32),
     end: (u32, u32),
     algorithm: &str,
     impassable: Option<u8>,
+    max_cost: Option<u32>,
 ) -> PyResult<Option<(Vec<(u32, u32)>, u32)>> {
     // PyReadonlyArray2<u8> enforces 2D array with u8 dtype at the Python binding level.
     // Arrays must be provided in (x, y) order, i.e. shape (width, height).
@@ -46,8 +49,10 @@ fn find_path_2d(
 
     // Dispatch to appropriate algorithm
     let result = match algorithm.to_lowercase().as_str() {
-        "astar" => AStar2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable),
-        "dijkstra" => Dijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable),
+        "astar" => AStar2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable, max_cost),
+        "dijkstra" => {
+            Dijkstra2D {}.find_path_in_heatmap(array_2d.view(), start, end, impassable, max_cost)
+        }
         _ => {
             return Err(PyValueError::new_err(format!(
                 "Unknown algorithm: {}. Supported algorithms: astar, dijkstra",

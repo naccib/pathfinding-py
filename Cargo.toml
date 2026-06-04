@@ -1,3 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["image_pathfinding", "pathfinding_cli", "pathfinding_py"]
+
+[profile.release]
+lto = "fat"        # cross-crate inlining across image_pathfinding -> pathfinding_py/cli
+codegen-units = 1  # better optimization at the cost of compile time
+# panic = "unwind" kept (default): PyO3 catches panics at the FFI boundary.

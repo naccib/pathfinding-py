@@ -27,6 +27,7 @@ fn main() {
             black_box(START),
             black_box(END),
             None,
+            None,
         );
         acc = acc.wrapping_add(r.unwrap().1 as u64);
     }

@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D, Pos2D,
+    AStar2D, AStarTemporal, BiDijkstra2D, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D, Pos2D,
     load_images_to_volume, load_png_to_ndarray,
 };
 use std::hint::black_box;
@@ -29,6 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let dji2d = Dijkstra2D {};
     let astar2d = AStar2D {};
+    let bidji2d = BiDijkstra2D {};
 
     c.bench_function("2D Dijkstra 600x600", |b| {
         b.iter(|| {
@@ -36,6 +37,19 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(array.view()),
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
+                None,
+                None,
+            )
+        })
+    });
+
+    c.bench_function("2D BiDijkstra 600x600", |b| {
+        b.iter(|| {
+            bidji2d.find_path_in_heatmap(
+                black_box(array.view()),
+                black_box(START_POS_2D),
+                black_box(END_POS_2D),
+                None,
                 None,
             )
         })
@@ -48,6 +62,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_2D),
                 black_box(END_POS_2D),
                 None,
+                None,
             )
         })
     });
@@ -59,6 +74,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_IMPASSABLE_2D),
                 black_box(END_POS_IMPASSABLE_2D),
                 Some(255u8),
+                None,
             )
         })
     });
@@ -70,6 +86,19 @@ fn criterion_benchmark(c: &mut Criterion) {
                 black_box(START_POS_IMPASSABLE_2D),
                 black_box(END_POS_IMPASSABLE_2D),
                 Some(255u8),
+                None,
+            )
+        })
+    });
+
+    c.bench_function("2D BiDijkstra impassable 600x600", |b| {
+        b.iter(|| {
+            bidji2d.find_path_in_heatmap(
+                black_box(array_impassable.view()),
+                black_box(START_POS_IMPASSABLE_2D),
+                black_box(END_POS_IMPASSABLE_2D),
+                Some(255u8),
+                None,
             )
         })
     });

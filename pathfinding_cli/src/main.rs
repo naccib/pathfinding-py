@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use image::{Rgb, RgbImage};
 use image_pathfinding::{
-    AStar2D, AStarTemporal, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
+    AStar2D, AStarTemporal, BiDijkstra2D, Dijkstra2D, DijkstraTemporal, ImagePathfinder2D,
     load_images_to_volume, load_png_to_ndarray,
 };
 use std::fs;
@@ -59,6 +59,10 @@ struct Cli {
     #[arg(long, default_value = None)]
     impassable: Option<u8>,
 
+    /// Cost budget. If provided, the search gives up once no path to the end can cost <= this value.
+    #[arg(long, default_value = None)]
+    max_cost: Option<u32>,
+
     /// Output directory
     #[arg(long, default_value = "/tmp")]
     output_dir: PathBuf,
@@ -71,6 +75,9 @@ struct Cli {
 enum Algorithm {
     Astar,
     Dijkstra,
+    /// Bidirectional Dijkstra (2D only).
+    #[value(alias = "bidijkstra", alias = "bidirectional")]
+    BiDijkstra,
 }
 
 fn main() -> Result<()> {
@@ -99,10 +106,31 @@ fn main() -> Result<()> {
 
         let path = match cli.algo {
             Algorithm::Dijkstra => {
-                Dijkstra2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+                Dijkstra2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
             }
             Algorithm::Astar => {
-                AStar2D {}.find_path_in_heatmap(array.view(), start_xy, end_xy, cli.impassable)
+                AStar2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
+            }
+            Algorithm::BiDijkstra => {
+                BiDijkstra2D {}.find_path_in_heatmap(
+                    array.view(),
+                    start_xy,
+                    end_xy,
+                    cli.impassable,
+                    cli.max_cost,
+                )
             }
         };
 
@@ -189,6 +217,9 @@ fn main() -> Result<()> {
                 starts,
                 ends,
             ),
+            Algorithm::BiDijkstra => {
+                anyhow::bail!("bidijkstra is only available for 2D (single-image) pathfinding")
+            }
         };
 
         if let Some((points, cost)) = path {
